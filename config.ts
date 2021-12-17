@@ -1,10 +1,10 @@
 import { Low, JSONFile } from 'lowdb';
 import { Keyboard } from "grammy";
-import mongoose from "mongoose";
 import { ApiPromise } from "@polkadot/api";
 import { Bot } from "grammy";
 import { RunnerHandle } from '@grammyjs/runner';
 import { initDb } from './src/mongo/db.js';
+import { blockCountAdapter } from './tools/blockCountAdapter.js';
 
 type BotParams = {
   api: ApiPromise,
@@ -12,6 +12,7 @@ type BotParams = {
   settings: any,
   bot: Bot,
   runnerHandle: RunnerHandle;
+  blockCountAdapter: blockCountAdapter;
 };
 
 export const botParams: BotParams = {
@@ -20,6 +21,7 @@ export const botParams: BotParams = {
   settings: null,
   bot: null,
   runnerHandle: null,
+  blockCountAdapter: null,
 };
 
 export const getKeyboard = async (ctx): Promise<Keyboard> => {

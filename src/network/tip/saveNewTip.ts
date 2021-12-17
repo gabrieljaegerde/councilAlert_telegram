@@ -18,66 +18,16 @@ import { logger } from "../../../tools/logger.js";
 import { InlineKeyboard } from "grammy";
 
 const sendNewMessages = async (tip) => {
-  const alertCol = await getAlertCollection();
   const userCol = await getUserCollection();
   const chain = botParams.settings.network.name.toLowerCase();
   const inlineKeyboard = new InlineKeyboard().url("PolkAssembly",
     `https://${chain}.polkassembly.io/tip/${tip.hash}`);
 
-  //message finder/beneficiary (same wallet)
-  if (tip.meta.who === tip.meta.finder) {
-    const alerts = await alertCol.find(
-      { address: tip.meta.who }
-    ).toArray();
-    for (const alert of alerts) {
-      if (alert && alert.new) {
-        const user = await userCol.findOne({ chatId: alert.chatId });
-        if (user && !user.blocked) {
-          const message = `*Alert for ${await getAccountName(tip.meta.who, true)}*\n\n` +
-            "A new tip request has just been created of which this wallet is " +
-            "finder and beneficiary.\n\n" +
-            `*Tip Reason*: _${tip.reason}_`;
-          await send(user.chatId, message, inlineKeyboard);
-        }
-      }
-    }
-    return;
-  }
-
-  //message finder
-  const alertsFinder = await alertCol.find(
-    { address: tip.meta.finder }
-  ).toArray();
-  for (const alertFinder of alertsFinder) {
-    if (alertFinder && alertFinder.new) {
-      const user = await userCol.findOne({ chatId: alertFinder.chatId });
-      if (user && !user.blocked) {
-        const findersFee = tip.meta.findersFee ? tip.tipFindersFee : 0;
-        const message = `*Alert for ${await getAccountName(tip.meta.finder, true)}*\n\n` +
-          "A new tip request has just been created by this wallet.\n\n" +
-          `*Tip Reason*: _${tip.reason}_\n\n` +
-          `*Beneficiary*: _${await getAccountName(tip.meta.who, true)}_\n\n` +
-          `*Your Finder's Fee*: _${findersFee}%_`;
-        await send(user.chatId, message, inlineKeyboard);
-      }
-    }
-  }
-
-  //message beneficiary
-  const alertsBeneficiary = await alertCol.find(
-    { address: tip.meta.who }
-  ).toArray();
-  for (const alertBeneficiary of alertsBeneficiary) {
-    if (alertBeneficiary && alertBeneficiary.new) {
-      const user = await userCol.findOne({ chatId: alertBeneficiary.chatId });
-      if (user && !user.blocked) {
-        const message = `*Alert for ${await getAccountName(tip.meta.who, true)}*\n\n` +
-          "A new tip request has just been created for this wallet.\n\n" +
-          `*Tip Reason*: _${tip.reason}_\n\n` +
-          `*Finder*: _${await getAccountName(tip.meta.finder, true)}_`;
-        await send(user.chatId, message, inlineKeyboard);
-      }
-    }
+  const user = await userCol.find({});
+  if (user && !user.blocked && user.broadcast) {
+    const message = "A new tip request has just been created.\n\n" +
+      `*Tip Reason*: _${tip.reason}_`;
+    await send(user.chatId, message, inlineKeyboard);
   }
 };
 

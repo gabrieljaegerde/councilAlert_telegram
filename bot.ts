@@ -34,6 +34,7 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           chatId: ctx.chat.id,
           type: ctx.chat.type,
           blocked: false,
+          broadcast: true,
           createdAt: new Date()
         });
       }
@@ -41,10 +42,9 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
         user.blocked = false;
         await user.save();
       }
-      message = `Welcome to the ${botParams.settings.network.name} TipAlert bot.\n\n` +
-        `The days of refreshing polkadot.js or doTreasury ` +
-        `are over!\n\nSimply add an alert for your wallet and I will notify you here of any changes ` +
-        `to your tip requests.\n\nFrom a Dotsama Freelancer with love. 🤎`;
+      message = `Welcome to the ${botParams.settings.network.name} CouncilAlert bot.\n\n` +
+        `Simply add an alert for your wallet and I will help you stay on top of your council obligations.\n\n` +
+        `From a Dotsama Freelancer with love. 🤎`;
       await ctx.reply(
         message,
         {

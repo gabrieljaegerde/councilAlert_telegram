@@ -201,5 +201,5 @@ export const findCallInSections = (call, sections, targetMethod) => {
 export const getCouncilMembers = async (blockHash) => {
   const blockApi = await botParams.api.at(blockHash);
   const members = await blockApi.query.council.members();
-  return members.toJSON();
+  return members.map((member) => { return member.toString(); });
 };

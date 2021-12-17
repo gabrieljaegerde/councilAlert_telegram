@@ -10,6 +10,7 @@ import { Low } from "lowdb/lib";
 import mongoose from "mongoose";
 import { BlockListener } from "./src/network/blockListener.js";
 import { getUserCollection } from "./src/mongo/db.js";
+import { sendNotifications } from "./src/notification/sendNotifications.js";
 
 dotenv.config();
 
@@ -17,6 +18,10 @@ class SubstrateBot {
   settings: any;
   api: ApiPromise;
   localStorage: Low;
+  motionHourly: NodeJS.Timer;
+  motionDaily: NodeJS.Timer;
+  tipHourly: NodeJS.Timer;
+  tipDaily: NodeJS.Timer;
   /**
    * Create SubstrateBot instance
    * @param config - SubstrateBot config
@@ -55,11 +60,30 @@ class SubstrateBot {
     const { runnerHandle, tBot } = await bot.start();
     botParams.bot = tBot;
     botParams.runnerHandle = runnerHandle;
+    botParams.blockCountAdapter = new blockCountAdapter(botParams.localStorage, "headerBlock");
     new BlockListener(botParams.api,
-      new blockCountAdapter(botParams.localStorage, "headerBlock"));
+      botParams.blockCountAdapter);
+
+    sendNotifications("motion", "hourly");
+    sendNotifications("motion", "daily");
+    sendNotifications("tip", "hourly");
+    sendNotifications("tip", "daily");
+    
+    //hourly job motion
+    this.motionHourly = setInterval(function () { sendNotifications("motion", "hourly"); }, 1000 * 60 * 60);
+    //daily job motion
+    this.motionDaily = setInterval(function () { sendNotifications("motion", "daily"); }, 1000 * 60 * 60 * 24);
+    //hourly job tip
+    this.tipHourly = setInterval(function () { sendNotifications("tip", "hourly"); }, 1000 * 60 * 60);
+    //daily job tip
+    this.tipDaily = setInterval(function () { sendNotifications("tip", "daily"); }, 1000 * 60 * 60 * 24);
   }
 
   async stop() {
+    clearInterval(this.motionHourly);
+    clearInterval(this.motionDaily);
+    clearInterval(this.tipHourly);
+    clearInterval(this.tipDaily);
     await botParams.runnerHandle.stop();
     console.log("bot stopped.");
     await mongoose.connection.close(false);
@@ -77,6 +101,7 @@ async function main() {
     api
   });
   await substrateBot.run();
+
   process.once('SIGINT', () => {
     substrateBot.stop();
   });

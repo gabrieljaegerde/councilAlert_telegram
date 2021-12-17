@@ -22,7 +22,7 @@ listAlerts.chooseIntoSubmenu(
         if (!userAlerts || userAlerts.length === 0)
             return "";
         return userAlerts.map((alert) =>
-            alert.address
+            alert._id
         );
     },
     showAlert,
@@ -30,7 +30,8 @@ listAlerts.chooseIntoSubmenu(
         buttonText: async (ctx: Context, key) => {
             if (key === "")
                 return;
-            return await getAccountName(key, true);
+            const alert = userAlerts.filter(function (item) { return item._id.toString() === key; })[0];
+            return await getAccountName(alert.address, true);
         },
         maxRows: 5,
         columns: 1,

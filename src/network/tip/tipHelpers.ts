@@ -8,6 +8,7 @@ import {
     UtilityMethods,
 } from "../../../tools/constants.js";
 import { getCall } from "../../../tools/utils.js";
+import { getTipCollection } from "../../mongo/db.js";
 
 export const getTipMeta = async (tipHash, { blockHeight, blockHash }) => {
     const blockApi = await botParams.api.at(blockHash);
@@ -160,4 +161,17 @@ export const getTipMethodNameAndArgs = async (
     // TODO: handle other extrinsics that wrap the tip methods
 
     return [name, args];
+};
+
+export const getOutstandingTips = async (address) => {
+    const tipCol = await getTipCollection();
+    let outstandingTips = [];
+    const openTips = await tipCol.find({ isClosedOrRetracted: false }).toArray();
+    for (const tip of openTips) {
+        const voted = tip.meta.tips.filter((item) => { return (item[0] === address); });
+        if (voted.length === 0) {
+            outstandingTips.push(tip);
+        }
+    }
+    return outstandingTips;
 };
