@@ -8,7 +8,7 @@ const frequencyOptions = ["hourly", "daily"];
 
 export const selectFrequency = new MenuTemplate(async (ctx: Context) => {
     alert = userAlerts.filter(function (item) { return item.name === ctx.match[1]; })[0];
-    const text = `How often would you like to be reminded on outstanding ${ctx.match[1]} votes?`;
+    const text = `How often would you like to be reminded for ${ctx.match[1]} votes?`;
     return { text, parse_mode: "Markdown" };
 });
 

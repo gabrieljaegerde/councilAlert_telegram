@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { botParams } from "../../config.js";
-import { blockCountAdapter } from "../../tools/blockCountAdapter.js";
+import { BlockCountAdapter } from "../../tools/blockCountAdapter.js";
 import { handleEvents } from "./eventsHandler.js";
 import { getBlockIndexer } from "../../tools/substrateUtils.js";
 import { handleExtrinsics } from "./extrinsicsHandler.js";
@@ -16,7 +16,7 @@ export class BlockListener {
     private apiPromise: ApiPromise;
     private initialised: boolean;
     private missingBlockFetchInitiated: boolean;
-    private missingBlockEventsFetched: boolean;
+    public missingBlockEventsFetched: boolean;
     private currentBlockNumber: number;
     public storageProvider: IStorageProvider;
     constructor(
@@ -34,7 +34,7 @@ export class BlockListener {
         this.missingBlockEventsFetched = false;
         this.currentBlockNumber = 0;
         this.storageProvider =
-            storageProvider || new blockCountAdapter(botParams.localStorage, "headerBlock");
+            storageProvider || new BlockCountAdapter(botParams.localStorage, "headerBlock");
         this.initialize();
     }
 
@@ -85,7 +85,6 @@ export class BlockListener {
 
             if (!this.missingBlockEventsFetched && !this.missingBlockFetchInitiated) {
                 this.missingBlockFetchInitiated = true;
-                console.log("fetching missing")
                 const latestBlock = await this.storageProvider.get();
                 await this.fetchMissingBlockEventsAndExtrinsics(latestBlock, blockNumber - 1);
                 this.missingBlockEventsFetched = true;

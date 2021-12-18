@@ -4,7 +4,8 @@ import { ApiPromise } from "@polkadot/api";
 import { Bot } from "grammy";
 import { RunnerHandle } from '@grammyjs/runner';
 import { getUserCollection, initDb } from './src/mongo/db.js';
-import { blockCountAdapter } from './tools/blockCountAdapter.js';
+import { BlockCountAdapter } from './tools/blockCountAdapter.js';
+import { BlockListener } from './src/network/blockListener.js';
 
 type BotParams = {
   api: ApiPromise,
@@ -12,7 +13,8 @@ type BotParams = {
   settings: any,
   bot: Bot,
   runnerHandle: RunnerHandle;
-  blockCountAdapter: blockCountAdapter;
+  blockCountAdapter: BlockCountAdapter;
+  blockListener: BlockListener
 };
 
 export const botParams: BotParams = {
@@ -22,6 +24,7 @@ export const botParams: BotParams = {
   bot: null,
   runnerHandle: null,
   blockCountAdapter: null,
+  blockListener: null
 };
 
 export const getKeyboard = async (ctx): Promise<Keyboard> => {
@@ -31,13 +34,13 @@ export const getKeyboard = async (ctx): Promise<Keyboard> => {
     return new Keyboard()
       .text("➕ Add alert").row()
       .text("📒 My addresses/alerts").row()
-      .text("Turn off new motion/tip broadcasting").row();
+      .text("✅ Turn off new motion/tip broadcasting").row();
   }
   else {
     return new Keyboard()
       .text("➕ Add alert").row()
       .text("📒 My addresses/alerts").row()
-      .text("Turn on new motion/tip broadcasting").row();
+      .text("❌ Turn on new motion/tip broadcasting").row();
   }
 };
 

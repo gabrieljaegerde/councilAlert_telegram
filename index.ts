@@ -1,6 +1,6 @@
 import { botParams, getDb, getLocalStorage } from "./config.js";
 import { getSettings } from "./tools/settings.js";
-import { blockCountAdapter } from "./tools/blockCountAdapter.js";
+import { BlockCountAdapter } from "./tools/blockCountAdapter.js";
 import dotenv from "dotenv";
 import * as bot from "./bot.js";
 import { bigNumberArithmetic, send } from "./tools/utils.js";
@@ -60,15 +60,15 @@ class SubstrateBot {
     const { runnerHandle, tBot } = await bot.start();
     botParams.bot = tBot;
     botParams.runnerHandle = runnerHandle;
-    botParams.blockCountAdapter = new blockCountAdapter(botParams.localStorage, "headerBlock");
-    new BlockListener(botParams.api,
+    botParams.blockCountAdapter = new BlockCountAdapter(botParams.localStorage, "headerBlock");
+    botParams.blockListener = new BlockListener(botParams.api,
       botParams.blockCountAdapter);
 
     sendNotifications("motion", "hourly");
     sendNotifications("motion", "daily");
     sendNotifications("tip", "hourly");
     sendNotifications("tip", "daily");
-    
+
     //hourly job motion
     this.motionHourly = setInterval(function () { sendNotifications("motion", "hourly"); }, 1000 * 60 * 60);
     //daily job motion

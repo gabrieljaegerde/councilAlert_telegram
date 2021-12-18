@@ -6,6 +6,8 @@ import { getOutstandingTips } from "../network/tip/tipHelpers.js";
 
 
 export const sendNotifications = async (motionOrTip, frequency) => {
+    if (botParams.blockListener.missingBlockEventsFetched === false)
+        return;
     const currentBlock = await botParams.blockCountAdapter.get();
     const blockHash = await botParams.api.rpc.chain.getBlockHash(currentBlock);
     const councilAddresses = await getCouncilMembers(blockHash);
@@ -16,8 +18,10 @@ export const sendNotifications = async (motionOrTip, frequency) => {
             const nonVotedMotions = await getOutstandingMotions(memberAddress);
             for (const motion of nonVotedMotions) {
                 outstandingMotionsString += (`${motion["method"]}` +
-                    (motion["method"] === "approveProposal" ? `: ${motion["treasuryProposalId"]}\n` : "") +
-                    (motion["method"] === "approveBounty" ? `: ${motion["treasuryBountyId"]}\n` : ""));
+                    (motion["method"] === "approveProposal" ? `: ${motion["treasuryProposalId"]}` : "") +
+                    (motion["method"] === "approveBounty" ? `: ${motion["treasuryBountyId"]}` : "") +
+                    (motion["method"] === "proposeCurator" ? `: ${motion["treasuryBountyId"]}` : "") +
+                    "\n");
             }
         }
         else if (motionOrTip === "tip") {
@@ -36,7 +40,7 @@ export const sendNotifications = async (motionOrTip, frequency) => {
                     if ((motionOrTip === "motion" && outstandingMotionsString != "") ||
                         (motionOrTip === "tip" && outstandingTipsString != "")) {
                         const message = `*Alert for ${await getAccountName(alert.address, true)}*\n\n` +
-                            `The ecosystem needs you!\n\n` +
+                            `The ${botParams.settings.network.name} community needs you!\n\n` +
                             `You have not voted on the following ${motionOrTip}(s) yet:\n\n` +
                             (motionOrTip === "motion" ? outstandingMotionsString : outstandingTipsString);
                         await send(user.chatId, message);

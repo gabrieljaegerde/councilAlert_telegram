@@ -13,11 +13,13 @@ const sendNewMessages = async (motion) => {
   const inlineKeyboard = new InlineKeyboard().url("PolkAssembly",
     `https://${chain}.polkassembly.io/treasury/${motion.treasuryProposalId}`);
 
-  const user = await userCol.find({});
-  if (user && !user.blocked && user.broadcast) {
-    const message = "A new motion is up for vote.\n\n" +
-      `${motion.method}: ${motion.treasuryProposalId}`;
-    await send(user.chatId, message, inlineKeyboard);
+  const users = await userCol.find({}).toArray();
+  for (const user of users) {
+    if (user && !user.blocked && user.broadcast) {
+      const message = "A new motion is up for vote.\n\n" +
+        `*${motion.method}*: _${motion.treasuryProposalId}_`;
+      await send(user.chatId, message, inlineKeyboard);
+    }
   }
 };
 

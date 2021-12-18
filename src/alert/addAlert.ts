@@ -22,7 +22,7 @@ export let userAlerts = alerts;
 
 export const addAlert = new MenuTemplate(async (ctx: Context) => {
     let info = `Please select the reminder frequency for the respective event. I will only send you ` +
-        `reminders until you have voted.`;
+        `reminders when the address is a coucil member and until it has voted.`;
     return { text: info, parse_mode: "Markdown" };
 });
 
@@ -59,8 +59,7 @@ addAlert.interact(
             replyMsg += `
 
 Please send me a public address of a ${botParams.settings.network.name} account ` +
-                `that you want to link to these events. You will off course only be notified of the` +
-                `above events when this address is serving as a council member.`;
+                `that you want to link to this alert.`;
             enterAddress.replyWithMarkdown(ctx, replyMsg);
             return false;
         },

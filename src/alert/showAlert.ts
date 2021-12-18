@@ -13,8 +13,8 @@ export const showAlert = new MenuTemplate(async (ctx: Context) => {
     alert = await alertCol.findOne({ _id: new ObjectId(ctx.match[1]) });
     let info = `Alert for *${await getAccountName(alert.address)}*\n\n` +
         `You will be reminded of the following events regarding this address:\n\n` +
-        `Outstanding motion votes: ${alert.motions}\n\n` +
-        `Outstanding tip votes: ${alert.tips}\n\n`;
+        `Unvoted Motions: ${alert.motions}\n\n` +
+        `Unovted Tip requests: ${alert.tips}\n\n`;
     return { text: info, parse_mode: "Markdown" };
 });
 
@@ -29,22 +29,6 @@ showAlert.chooseIntoSubmenu('uf',
         }
     }
 );
-
-// showAlert.select(
-//     "s",
-//     ["new", "tipped", "closing", "closed"],
-//     {
-//         showFalseEmoji: true,
-//         isSet: (ctx, key) => alert[key],
-//         set: async (ctx, key, newState) => {
-//             const alertCol = await getAlertCollection();
-//             alert[key] = newState;
-//             await alertCol.updateOne({ address: alert.address }, { $set: alert });
-//             return true;
-//         },
-//         columns: 1
-//     }
-// );
 
 showAlert.interact("Delete Alert", "da", {
     do: async (ctx: Context) => {

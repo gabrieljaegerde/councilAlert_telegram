@@ -92,10 +92,10 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   });
 
   /*
-   *   react bot on 'Turn off new motion/tip broadcasting' message
+   *   react bot on '✅ Turn off new motion/tip broadcasting' message
    */
 
-  bot.hears("Turn off new motion/tip broadcasting", async (ctx) => {
+  bot.hears("✅ Turn off new motion/tip broadcasting", async (ctx) => {
     if (ctx.chat.type == "private") {
       const userCol = await getUserCollection();
 
@@ -120,10 +120,10 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   });
 
   /*
-   *   react bot on 'Turn on new motion/tip broadcasting' message
+   *   react bot on '❌ Turn on new motion/tip broadcasting' message
    */
 
-  bot.hears("Turn on new motion/tip broadcasting", async (ctx) => {
+  bot.hears("❌ Turn on new motion/tip broadcasting", async (ctx) => {
     if (ctx.chat.type == "private") {
       const userCol = await getUserCollection();
       await userCol.findOneAndUpdate({ chatId: ctx.chat.id },

@@ -23,11 +23,13 @@ const sendNewMessages = async (tip) => {
   const inlineKeyboard = new InlineKeyboard().url("PolkAssembly",
     `https://${chain}.polkassembly.io/tip/${tip.hash}`);
 
-  const user = await userCol.find({});
-  if (user && !user.blocked && user.broadcast) {
-    const message = "A new tip request has just been created.\n\n" +
-      `*Tip Reason*: _${tip.reason}_`;
-    await send(user.chatId, message, inlineKeyboard);
+  const users = await userCol.find({}).toArray();
+  for (const user of users) {
+    if (user && !user.blocked && user.broadcast) {
+      const message = "A new tip request has just been created.\n\n" +
+        `*Tip Reason*: _${tip.reason}_`;
+      await send(user.chatId, message, inlineKeyboard);
+    }
   }
 };
 
