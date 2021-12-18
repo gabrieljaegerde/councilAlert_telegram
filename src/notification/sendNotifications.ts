@@ -27,7 +27,7 @@ export const sendNotifications = async (motionOrTip, frequency) => {
         else if (motionOrTip === "tip") {
             const nonVotedTips = await getOutstandingTips(memberAddress);
             for (const tip of nonVotedTips) {
-                outstandingTipsString += `${tip["reason"]}\n`;
+                outstandingTipsString += `*Tip Reason*: _${tip.reason}_\n`;
             }
         }
         const alertCol = await getAlertCollection();

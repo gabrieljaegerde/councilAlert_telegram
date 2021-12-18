@@ -14,7 +14,7 @@ export const showAlert = new MenuTemplate(async (ctx: Context) => {
     let info = `Alert for *${await getAccountName(alert.address)}*\n\n` +
         `You will be reminded of the following events regarding this address:\n\n` +
         `Unvoted Motions: ${alert.motions}\n\n` +
-        `Unovted Tip requests: ${alert.tips}\n\n`;
+        `Unvoted Tip requests: ${alert.tips}\n\n`;
     return { text: info, parse_mode: "Markdown" };
 });
 
