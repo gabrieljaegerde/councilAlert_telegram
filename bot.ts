@@ -39,8 +39,11 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
         });
       }
       if (user && user.blocked) {
-        user.blocked = false;
-        await user.save();
+        await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
+          {
+            $set: { blocked: false }
+          }
+        );
       }
       message = `Welcome to the ${botParams.settings.network.name} CouncilAlert bot.\n\n` +
         `Simply add an alert for your wallet and I will help you stay on top of your council obligations.\n\n` +
@@ -88,6 +91,60 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
     }
   });
 
+  /*
+   *   react bot on 'Turn off new motion/tip broadcasting' message
+   */
+
+  bot.hears("Turn off new motion/tip broadcasting", async (ctx) => {
+    if (ctx.chat.type == "private") {
+      const userCol = await getUserCollection();
+
+      await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
+        {
+          $set: { broadcast: false }
+        }
+      );
+      const message = "You will no longer be notified of new tip requests and motions.\n\n" +
+        "Your alerts (should you have set any) are unaffected and still active.";
+      await ctx.reply(
+        message,
+        {
+          reply_markup: {
+            keyboard: (await getKeyboard(ctx)).build(),
+            resize_keyboard: true
+          },
+          parse_mode: "Markdown",
+        }
+      );
+    }
+  });
+
+  /*
+   *   react bot on 'Turn on new motion/tip broadcasting' message
+   */
+
+  bot.hears("Turn on new motion/tip broadcasting", async (ctx) => {
+    if (ctx.chat.type == "private") {
+      const userCol = await getUserCollection();
+      await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
+        {
+          $set: { broadcast: true }
+        }
+      );
+      const message = "You will from now on be notified of new tip requests and motions.";
+      await ctx.reply(
+        message,
+        {
+          reply_markup: {
+            keyboard: (await getKeyboard(ctx)).build(),
+            resize_keyboard: true
+          },
+          parse_mode: "Markdown",
+        }
+      );
+    }
+  });
+
   bot.use(addAlertMiddleware);
 
   bot.use(listAlertsMiddleware);
@@ -123,9 +180,11 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
     if (e instanceof GrammyError) {
       if (e.description.includes("bot was blocked by the user")) {
         const userCol = await getUserCollection();
-        const user = await userCol.findOne({ chatId: ctx.chat.id });
-        user.blocked = true;
-        await user.save();
+        await userCol.findOneAndUpdate({ chatId: ctx.chat.id },
+          {
+            $set: { blocked: true }
+          }
+        );
         console.log(new Date(), `Bot was blocked by user with chatid ${e.payload.chat_id}`);
         return;
       }

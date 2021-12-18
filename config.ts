@@ -3,7 +3,7 @@ import { Keyboard } from "grammy";
 import { ApiPromise } from "@polkadot/api";
 import { Bot } from "grammy";
 import { RunnerHandle } from '@grammyjs/runner';
-import { initDb } from './src/mongo/db.js';
+import { getUserCollection, initDb } from './src/mongo/db.js';
 import { blockCountAdapter } from './tools/blockCountAdapter.js';
 
 type BotParams = {
@@ -25,9 +25,20 @@ export const botParams: BotParams = {
 };
 
 export const getKeyboard = async (ctx): Promise<Keyboard> => {
-  return new Keyboard()
-    .text("➕ Add alert").row()
-    .text("📒 My addresses/alerts").row();
+  const userCol = await getUserCollection();
+  const user = await userCol.findOne({ chatId: ctx.chat.id });
+  if (user.broadcast) {
+    return new Keyboard()
+      .text("➕ Add alert").row()
+      .text("📒 My addresses/alerts").row()
+      .text("Turn off new motion/tip broadcasting").row();
+  }
+  else {
+    return new Keyboard()
+      .text("➕ Add alert").row()
+      .text("📒 My addresses/alerts").row()
+      .text("Turn on new motion/tip broadcasting").row();
+  }
 };
 
 export const getDb = async (): Promise<void> => {
