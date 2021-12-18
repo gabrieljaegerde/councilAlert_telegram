@@ -64,11 +64,6 @@ class SubstrateBot {
     botParams.blockListener = new BlockListener(botParams.api,
       botParams.blockCountAdapter);
 
-    sendNotifications("motion", "hourly");
-    sendNotifications("motion", "daily");
-    sendNotifications("tip", "hourly");
-    sendNotifications("tip", "daily");
-
     //hourly job motion
     this.motionHourly = setInterval(function () { sendNotifications("motion", "hourly"); }, 1000 * 60 * 60);
     //daily job motion

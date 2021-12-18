@@ -5,6 +5,7 @@ import { handleEvents } from "./eventsHandler.js";
 import { getBlockIndexer } from "../../tools/substrateUtils.js";
 import { handleExtrinsics } from "./extrinsicsHandler.js";
 import { logger } from "../../tools/logger.js";
+import { sendNotifications } from "../notification/sendNotifications.js";
 
 interface IStorageProvider {
     readonly storageKey: string;
@@ -88,6 +89,10 @@ export class BlockListener {
                 const latestBlock = await this.storageProvider.get();
                 await this.fetchMissingBlockEventsAndExtrinsics(latestBlock, blockNumber - 1);
                 this.missingBlockEventsFetched = true;
+                sendNotifications("motion", "hourly");
+                sendNotifications("motion", "daily");
+                sendNotifications("tip", "hourly");
+                sendNotifications("tip", "daily");
             }
 
             this.fetchEventsAndExtrinsicsAtBlock(blockNumber);
