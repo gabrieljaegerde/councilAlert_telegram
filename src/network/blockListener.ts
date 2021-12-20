@@ -54,7 +54,7 @@ export class BlockListener {
             const block = rawBlock.block;
             const blockIndexer = getBlockIndexer(block);
             const events = await blockApi.query.system.events();
-            //await handleExtrinsics(block.extrinsics, events, blockIndexer);
+            await handleExtrinsics(block.extrinsics, events, blockIndexer);
             await handleEvents(events, blockIndexer, block.extrinsics);
         } catch (e) {
             logger.error(`error fetching events at block ${blockNumber}: ${e}`);
@@ -89,10 +89,10 @@ export class BlockListener {
                 const latestBlock = await this.storageProvider.get();
                 await this.fetchMissingBlockEventsAndExtrinsics(latestBlock, blockNumber - 1);
                 this.missingBlockEventsFetched = true;
-                sendNotifications("motion", "hourly");
-                sendNotifications("motion", "daily");
-                sendNotifications("tip", "hourly");
-                sendNotifications("tip", "daily");
+                sendNotifications("motion", "hourly", true);
+                sendNotifications("motion", "daily", true);
+                sendNotifications("tip", "hourly", true);
+                sendNotifications("tip", "daily", true);
             }
 
             this.fetchEventsAndExtrinsicsAtBlock(blockNumber);

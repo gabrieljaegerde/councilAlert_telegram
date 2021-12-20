@@ -5,7 +5,7 @@ import { getOutstandingMotions } from "../network/council/motionHelpers.js";
 import { getOutstandingTips } from "../network/tip/tipHelpers.js";
 
 
-export const sendNotifications = async (motionOrTip, frequency) => {
+export const sendNotifications = async (motionOrTip: string, frequency: string, start?: boolean) => {
     if (botParams.blockListener.missingBlockEventsFetched === false)
         return;
     const currentBlock = await botParams.blockCountAdapter.get();
@@ -16,8 +16,9 @@ export const sendNotifications = async (motionOrTip, frequency) => {
         let outstandingTipsString = "";
         if (motionOrTip === "motion") {
             const nonVotedMotions = await getOutstandingMotions(memberAddress);
+            let motionCount = 1;
             for (const motion of nonVotedMotions) {
-                outstandingMotionsString += (`${motion["method"]}` +
+                outstandingMotionsString += (`*${motionCount++}.* ${motion["method"]}` +
                     (motion["method"] === "approveProposal" ? `: ${motion["treasuryProposalId"]}` : "") +
                     (motion["method"] === "approveBounty" ? `: ${motion["treasuryBountyId"]}` : "") +
                     (motion["method"] === "proposeCurator" ? `: ${motion["treasuryBountyId"]}` : "") +
@@ -26,8 +27,9 @@ export const sendNotifications = async (motionOrTip, frequency) => {
         }
         else if (motionOrTip === "tip") {
             const nonVotedTips = await getOutstandingTips(memberAddress);
+            let tipCount = 1;
             for (const tip of nonVotedTips) {
-                outstandingTipsString += `*Tip Reason*: _${tip.reason}_\n`;
+                outstandingTipsString += `*${tipCount++}.* _${tip.reason}_\n`;
             }
         }
         const alertCol = await getAlertCollection();
@@ -39,7 +41,8 @@ export const sendNotifications = async (motionOrTip, frequency) => {
                 if (user && !user.blocked) {
                     if ((motionOrTip === "motion" && outstandingMotionsString != "") ||
                         (motionOrTip === "tip" && outstandingTipsString != "")) {
-                        const message = `*Alert for ${await getAccountName(alert.address, true)}*\n\n` +
+                        const message = (start ? "The bot was just restarted.\n\n" : "") +
+                            `*Alert for ${await getAccountName(alert.address, true)}*\n\n` +
                             `The ${botParams.settings.network.name} community needs you!\n\n` +
                             `You have not voted on the following ${motionOrTip}(s) yet:\n\n` +
                             (motionOrTip === "motion" ? outstandingMotionsString : outstandingTipsString);

@@ -168,7 +168,9 @@ export const getOutstandingTips = async (address) => {
     let outstandingTips = [];
     const openTips = await tipCol.find({ isClosedOrRetracted: false }).toArray();
     for (const tip of openTips) {
-        const voted = tip.meta.tips.filter((item) => { return (item[0] === address); });
+        const voted = tip.meta.tips.filter((item) => {
+            return (item[0] === address);
+        });
         if (voted.length === 0) {
             outstandingTips.push(tip);
         }
