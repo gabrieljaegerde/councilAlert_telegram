@@ -1,4 +1,4 @@
-# CouncilAlert Telegram Bot
+# Council Alert Telegram Bot
 
 With this bot users will be notified of any new council events. Additionally, users can set up alerts for their respective address(es). Should their address be a council member, they will receive reminders on missing council actions required from them.
 

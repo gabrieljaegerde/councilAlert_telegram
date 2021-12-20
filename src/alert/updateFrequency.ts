@@ -10,7 +10,7 @@ const frequencyOptions = ["hourly", "daily"];
 export const updateFrequency = new MenuTemplate(async (ctx: Context) => {
     const alertCol = await getAlertCollection();
     alert = await alertCol.findOne({ _id: new ObjectId(ctx.match[1]) });
-    const text = `How often would you like to be reminded on outstanding ${ctx.match[2]} votes?`;
+    const text = `How often would you like to be reminded of uncompleted ${ctx.match[2]} votes?`;
     return { text, parse_mode: "Markdown" };
 });
 
