@@ -17,7 +17,7 @@ const sendNewMessages = async (motion) => {
     if (user && !user.blocked && user.broadcast) {
       const message = "A new motion is up for vote.\n\n" +
         `*${motion.method}*`;
-      await send(user.chatId, message, inlineKeyboard);
+      await send(user.chatId, message, "Markdown", inlineKeyboard);
     }
   }
 };

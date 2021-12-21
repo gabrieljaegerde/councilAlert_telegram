@@ -36,7 +36,7 @@ showAlert.interact("Delete Alert", "da", {
         const alertCol = await getAlertCollection();
         await alertCol.deleteOne({ address: alert.address });
         const message = `Alert for ${alert.address} deleted.`;
-        await send(ctx.chat.id, message);
+        await send(ctx.chat.id, message, "Markdown");
         listAlertsMiddleware.replyToContext(ctx, `la/`);
         return false;
     },

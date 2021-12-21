@@ -59,12 +59,22 @@ export const sleep = (ms: number): Promise<void> => {
   });
 };
 
-export const send = async (id: number, message: string, inlineKeyboard?: InlineKeyboard): Promise<void> => {
+export const send = async (id: number, message: string, parseMode: string, inlineKeyboard?: InlineKeyboard): Promise<void> => {
   try {
     if (inlineKeyboard)
-      await botParams.bot.api.sendMessage(id, message, { reply_markup: inlineKeyboard, parse_mode: "Markdown" });
+      if (parseMode === "MarkdownV2") {
+        await botParams.bot.api.sendMessage(id, message, { reply_markup: inlineKeyboard, parse_mode: "MarkdownV2" });
+      }
+      else {
+        await botParams.bot.api.sendMessage(id, message, { reply_markup: inlineKeyboard, parse_mode: "Markdown" });
+      }
     else
-      await botParams.bot.api.sendMessage(id, message, { parse_mode: "Markdown" });
+      if (parseMode === "MarkdownV2") {
+        await botParams.bot.api.sendMessage(id, message, { parse_mode: "MarkdownV2" });
+      }
+      else {
+        await botParams.bot.api.sendMessage(id, message, { parse_mode: "Markdown" });
+      }
   }
   catch (error) {
     if (error.message.includes("bot was blocked by the user")) {
@@ -204,4 +214,9 @@ export const getCouncilMembers = async (blockHash) => {
   const blockApi = await botParams.api.at(blockHash);
   const members = await blockApi.query.council.members();
   return members.map((member) => { return member.toString(); });
+};
+export const escapeMarkdown = (text) => {
+  var unescaped = text.replace(/\\(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '$1'); // unescape any "backslashed" character
+  var escaped = unescaped.replace(/(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '\\$1'); // escape *, _, `, ~, \
+  return escaped;
 };

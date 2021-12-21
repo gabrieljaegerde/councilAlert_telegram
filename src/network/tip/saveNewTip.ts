@@ -1,8 +1,8 @@
-import { getAccountName, getRealSigner, send } from "../../../tools/utils.js";
+import { escapeMarkdown, getRealSigner, send } from "../../../tools/utils.js";
 import {
   TipEvents,
 } from "../../../tools/constants.js";
-import { getAlertCollection, getTipCollection, getUserCollection } from "../../mongo/db.js";
+import { getTipCollection, getUserCollection } from "../../mongo/db.js";
 import {
   computeTipValue,
   getReasonStorageReasonText,
@@ -26,9 +26,10 @@ const sendNewMessages = async (tip) => {
   const users = await userCol.find({}).toArray();
   for (const user of users) {
     if (user && !user.blocked && user.broadcast) {
-      const message = "A new tip request has just been created.\n\n" +
-        `*Tip Reason*: _${tip.reason}_`;
-      await send(user.chatId, message, inlineKeyboard);
+      const escapedTipReason = escapeMarkdown(tip.reason);
+      const message = "A new tip request has just been created\\.\n\n" +
+      "*Tip Reason*: _" + escapedTipReason + "_";
+      await send(user.chatId, message, "MarkdownV2", inlineKeyboard);
     }
   }
 };

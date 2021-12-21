@@ -1,4 +1,4 @@
-import { getAccountName, getCouncilMembers, send } from "../../tools/utils.js";
+import { escapeMarkdown, getAccountName, getCouncilMembers, send } from "../../tools/utils.js";
 import { botParams } from "../../config.js";
 import { getAlertCollection, getUserCollection } from "../mongo/db.js";
 import { getOutstandingMotions } from "../network/council/motionHelpers.js";
@@ -18,7 +18,7 @@ export const sendNotifications = async (motionOrTip: string, frequency: string, 
             const nonVotedMotions = await getOutstandingMotions(memberAddress);
             let motionCount = 1;
             for (const motion of nonVotedMotions) {
-                outstandingMotionsString += (`*${motionCount++}.* ${motion["method"]}` +
+                outstandingMotionsString += (`*${motionCount++}\\.* ${motion["method"]}` +
                     (motion["method"] === "approveProposal" ? `: ${motion["treasuryProposalId"]}` : "") +
                     (motion["method"] === "approveBounty" ? `: ${motion["treasuryBountyId"]}` : "") +
                     (motion["method"] === "proposeCurator" ? `: ${motion["treasuryBountyId"]}` : "") +
@@ -29,7 +29,8 @@ export const sendNotifications = async (motionOrTip: string, frequency: string, 
             const nonVotedTips = await getOutstandingTips(memberAddress);
             let tipCount = 1;
             for (const tip of nonVotedTips) {
-                outstandingTipsString += `*${tipCount++}.* _${tip.reason}_\n`;
+                const escapedTipReason = escapeMarkdown(tip.reason);
+                outstandingTipsString += `*${tipCount++}\\.* _` + escapedTipReason + `_\n`;
             }
         }
         const alertCol = await getAlertCollection();
@@ -41,12 +42,12 @@ export const sendNotifications = async (motionOrTip: string, frequency: string, 
                 if (user && !user.blocked) {
                     if ((motionOrTip === "motion" && outstandingMotionsString != "") ||
                         (motionOrTip === "tip" && outstandingTipsString != "")) {
-                        const message = (start ? "The bot was just restarted.\n\n" : "") +
-                            `*Alert for ${await getAccountName(alert.address, true)}*\n\n` +
-                            `The ${botParams.settings.network.name} community needs you!\n\n` +
-                            `You have not voted on the following ${motionOrTip}(s) yet:\n\n` +
+                        const message = (start ? "The bot was just restarted\\.\n\n" : "") +
+                            `*Alert for ${escapeMarkdown(await getAccountName(alert.address, true))}*\n\n` +
+                            `The ${botParams.settings.network.name} community needs you\\!\n\n` +
+                            `You have not voted on the following ${motionOrTip}\\(s\\) yet:\n\n` +
                             (motionOrTip === "motion" ? outstandingMotionsString : outstandingTipsString);
-                        await send(user.chatId, message);
+                        await send(user.chatId, message, "MarkdownV2");
                     }
                 }
             }

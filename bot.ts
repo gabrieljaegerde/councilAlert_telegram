@@ -45,7 +45,7 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           }
         );
       }
-      message = `Welcome to the ${botParams.settings.network.name} CouncilAlert bot.\n\n` +
+      message = `Welcome to the ${botParams.settings.network.name} Council Alert bot.\n\n` +
         `Simply add an alert for your wallet and I will help you stay on top of your council obligations.\n\n` +
         `From a Dotsama Freelancer with love. 🤎`;
       await ctx.reply(
