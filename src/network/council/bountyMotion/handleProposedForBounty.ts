@@ -39,7 +39,7 @@ export const handleProposedForBounty = async (event, normalizedExtrinsic, extrin
             method
         )
     ) {
-        return;
+        return false;
     }
 
     const eventData = event.data.toJSON();
@@ -62,7 +62,7 @@ export const handleProposedForBounty = async (event, normalizedExtrinsic, extrin
     const motion = await motionCol.findOne({ hash, isFinal: false });
     if (motion) {
         logger.info(`motion with hash: ${hash} exists already`);
-        return;
+        return false;
     }
     await motionCol.insertOne({
         hash,
@@ -82,7 +82,8 @@ export const handleProposedForBounty = async (event, normalizedExtrinsic, extrin
     const motionDb = await motionCol.findOne({ hash, isFinal: false });
     if (!motionDb) {
         logger.error(`error fetching motion with hash: ${hash} in saveNewMotion`);
-        return;
+        return false;
     }
     sendNewMessages(motionDb);
+    return true;
 };

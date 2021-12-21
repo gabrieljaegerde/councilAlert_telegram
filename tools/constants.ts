@@ -1,11 +1,4 @@
-export const ksmFirstTipClosedHeight = 2192357;
-export const ksmFirstRejectedEventHeight = 1164233;
-
-export const ksmTreasuryRefactorApplyHeight = 6143966;
-export const dotTreasuryRefactorApplyHeight = 3899548;
-
 export const TreasuryAccount = "F3opxRbN5ZbjJNU511Kj2TLuzFcDq9BGduA9TgiECafpg29";
-export const DotTreasuryAccount = "13UVJyLnbVp9RBZYFwFGyDvVd1y27Tt8tkntv6Q7JVPhFsTB";
 
 export const ProposalState = Object.freeze({
   Proposed: "Proposed",

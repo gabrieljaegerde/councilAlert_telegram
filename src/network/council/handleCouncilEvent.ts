@@ -6,6 +6,7 @@ import { updateProposalStateByVoteResult } from "./proposalMotion/updatePropsalB
 import { handleProposedForProposal } from "./proposalMotion/handleProposedForProposal.js";
 import { handleProposedForBounty } from "./bountyMotion/handleProposedForBounty.js";
 import { updateBountyByVoteResult } from "./bountyMotion/updateBountyByVoteResult.js";
+import { handleProposedOther } from "./handleProposedOther.js";
 
 export const handleCouncilEvent = async (event, normalizedExtrinsic, extrinsic) => {
     const { section, method } = event;
@@ -13,8 +14,11 @@ export const handleCouncilEvent = async (event, normalizedExtrinsic, extrinsic) 
         return;
     }
     if (method === CouncilEvents.Proposed) {
-        await handleProposedForProposal(event, normalizedExtrinsic, extrinsic);
-        await handleProposedForBounty(event, normalizedExtrinsic, extrinsic);
+        const isProposal = await handleProposedForProposal(event, normalizedExtrinsic, extrinsic);
+        const isBounty = await handleProposedForBounty(event, normalizedExtrinsic, extrinsic);
+        if (!isProposal && !isBounty){
+            await handleProposedOther(event, normalizedExtrinsic, extrinsic);
+        }
     } else if (method === CouncilEvents.Voted) {
         await handleVoteEvent(event, normalizedExtrinsic);
     } else if (method === CouncilEvents.Approved) {

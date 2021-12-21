@@ -1,29 +1,28 @@
-import { getMotionCollection, getUserCollection } from "../../../mongo/db.js";
-import { CouncilEvents, Modules, MotionActions } from "../../../../tools/constants.js";
-import { extractCallIndexAndArgs, getMotionVoting, isProposalMotion } from "../../proposal/porposalHelpers.js";
-import { updateProposalStateByProposeOrVote } from "./updateProposalByProposalOrVote.js";
-import { logger } from "../../../../tools/logger.js";
-import { botParams } from "../../../../config.js";
+import { getMotionCollection, getUserCollection } from "../../mongo/db.js";
+import { CouncilEvents, DemocracyMethods, Modules, MotionActions } from "../../../tools/constants.js";
+import { extractCallIndexAndArgs, getMotionVoting } from "../proposal/porposalHelpers.js";
+import { logger } from "../../../tools/logger.js";
+import { botParams } from "../../../config.js";
 import { InlineKeyboard } from "grammy";
-import { send } from "../../../../tools/utils.js";
+import { send } from "../../../tools/utils.js";
 
 const sendNewMessages = async (motion) => {
   const userCol = await getUserCollection();
   const chain = botParams.settings.network.name.toLowerCase();
   const inlineKeyboard = new InlineKeyboard().url("PolkAssembly",
-    `https://${chain}.polkassembly.io/treasury/${motion.treasuryProposalId}`);
+    `https://${chain}.polkassembly.io/motion/${motion.index}`);
 
   const users = await userCol.find({}).toArray();
   for (const user of users) {
     if (user && !user.blocked && user.broadcast) {
       const message = "A new motion is up for vote.\n\n" +
-        `*${motion.method}*: _${motion.treasuryProposalId}_`;
+        `*${motion.method}*`;
       await send(user.chatId, message, inlineKeyboard);
     }
   }
 };
 
-export const handleProposedForProposal = async (
+export const handleProposedOther = async (
   event,
   normalizedExtrinsic,
   extrinsic
@@ -32,12 +31,6 @@ export const handleProposedForProposal = async (
     normalizedExtrinsic,
     extrinsic
   );
-
-  if (section !== Modules.Treasury || !isProposalMotion(method)) {
-    return false;
-  }
-
-  const { proposal_id: treasuryProposalId } = args;
   const eventData = event.data.toJSON();
   const [proposer, index, hash] = eventData;
   const voting = await getMotionVoting(
@@ -57,7 +50,7 @@ export const handleProposedForProposal = async (
   const motion = await motionCol.findOne({ hash, isFinal: false });
   if (motion) {
     logger.info(`motion with hash: ${hash} exists already`);
-    return false;
+    return;
   }
 
   await motionCol.insertOne({
@@ -65,7 +58,6 @@ export const handleProposedForProposal = async (
     index,
     proposer,
     method,
-    treasuryProposalId,
     voting,
     isFinal: false,
     state: {
@@ -76,15 +68,10 @@ export const handleProposedForProposal = async (
     timeline,
   });
 
-  await updateProposalStateByProposeOrVote(
-    hash,
-    normalizedExtrinsic.extrinsicIndexer
-  );
   const motionDb = await motionCol.findOne({ hash, isFinal: false });
   if (!motionDb) {
     logger.error(`error fetching motion with hash: ${hash} in saveNewMotion`);
-    return false;
+    return;
   }
   sendNewMessages(motionDb);
-  return true;
 };

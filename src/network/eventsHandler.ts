@@ -56,7 +56,7 @@ export const handleEvents = async (events: Vec<FrameSystemEventRecord>, blockInd
 
   for (let count = 0; count < events.length; count++) {
     const { event, phase } = events[count];
-
+    
     let normalizedExtrinsic;
     if (!phase.isNone) {
       const phaseValue = parseInt(phase.value.toString());
