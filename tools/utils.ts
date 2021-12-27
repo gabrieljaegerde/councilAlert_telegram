@@ -215,6 +215,7 @@ export const getCouncilMembers = async (blockHash) => {
   const members = await blockApi.query.council.members();
   return members.map((member) => { return member.toString(); });
 };
+
 export const escapeMarkdown = (text) => {
   var unescaped = text.replace(/\\(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '$1'); // unescape any "backslashed" character
   var escaped = unescaped.replace(/(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '\\$1'); // escape *, _, `, ~, \

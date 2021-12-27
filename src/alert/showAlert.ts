@@ -2,7 +2,7 @@ import { MenuTemplate, createBackMainMenuButtons, deleteMenuFromContext } from "
 import { Context } from "grammy";
 import { getAlertCollection } from "../mongo/db.js";
 import { listAlertsMiddleware } from "./listAlerts.js";
-import { getAccountName, send } from "../../tools/utils.js";
+import { escapeMarkdown, getAccountName, send } from "../../tools/utils.js";
 import { updateFrequency } from "./updateFrequency.js";
 import { ObjectId } from "mongodb";
 
@@ -11,7 +11,7 @@ let alert;
 export const showAlert = new MenuTemplate(async (ctx: Context) => {
     const alertCol = await getAlertCollection();
     alert = await alertCol.findOne({ _id: new ObjectId(ctx.match[1]) });
-    let info = `Alert for *${await getAccountName(alert.address)}*\n\n` +
+    let info = `Alert for *${escapeMarkdown(await getAccountName(alert.address))}*\n\n` +
         `You will be reminded of the following events regarding this address:\n\n` +
         `Unvoted Motions: ${alert.motions}\n\n` +
         `Unvoted Tip requests: ${alert.tips}\n\n`;
