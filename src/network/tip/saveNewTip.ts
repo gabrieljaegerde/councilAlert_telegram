@@ -53,38 +53,38 @@ export const saveNewTip = async (hash: string, normalizedExtrinsic, extrinsic: G
   );
 
   const tipCol = await getTipCollection();
-  const tip = await tipCol.findOne({ hash, isClosedOrRetracted: false });
-  if (tip) {
-    logger.info(`tip with hash: ${hash} exists already`);
-    return;
-  }
-  await tipCol.insertOne({
-    indexer,
-    hash,
-    reason,
-    finder,
-    medianValue,
-    meta,
-    tippersCount,
-    tipFindersFee,
-    isClosedOrRetracted: false,
-    state: {
-      indexer: normalizedExtrinsic.extrinsicIndexer,
-      state: TipEvents.NewTip,
-      data: [hash],
-    },
-    timeline: [
-      {
-        type: "extrinsic",
-        method,
-        args: {
-          ...args,
-          finder,
-        },
-        extrinsicIndexer: indexer,
+  const query = { hash, isClosedOrRetracted: false };
+  const update = {
+    $set: {
+      indexer,
+      hash,
+      reason,
+      finder,
+      medianValue,
+      meta,
+      tippersCount,
+      tipFindersFee,
+      isClosedOrRetracted: false,
+      state: {
+        indexer: normalizedExtrinsic.extrinsicIndexer,
+        state: TipEvents.NewTip,
+        data: [hash],
       },
-    ],
-  });
+      timeline: [
+        {
+          type: "extrinsic",
+          method,
+          args: {
+            ...args,
+            finder,
+          },
+          extrinsicIndexer: indexer,
+        },
+      ],
+    }
+  };
+  const options = { upsert: true };
+  await tipCol.updateOne(query, update, options);
   const tipDb = await tipCol.findOne({ hash, isClosedOrRetracted: false });
   if (!tipDb) {
     logger.error(`error fetching tip with hash: ${hash} in saveNewTip`);

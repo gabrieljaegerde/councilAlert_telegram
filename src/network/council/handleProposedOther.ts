@@ -47,27 +47,26 @@ export const handleProposedOther = async (
   ];
 
   const motionCol = await getMotionCollection();
-  const motion = await motionCol.findOne({ hash, isFinal: false });
-  if (motion) {
-    logger.info(`motion with hash: ${hash} exists already`);
-    return;
-  }
 
-  await motionCol.insertOne({
-    hash,
-    index,
-    proposer,
-    method,
-    voting,
-    isFinal: false,
-    state: {
-      state: CouncilEvents.Proposed,
-      eventData,
-      extrinsic: normalizedExtrinsic,
-    },
-    timeline,
-  });
-
+  const query = { hash, isFinal: false };
+  const update = {
+    $set: {
+      hash,
+      index,
+      proposer,
+      method,
+      voting,
+      isFinal: false,
+      state: {
+        state: CouncilEvents.Proposed,
+        eventData,
+        extrinsic: normalizedExtrinsic,
+      },
+      timeline,
+    }
+  };
+  const options = { upsert: true };
+  await motionCol.updateOne(query, update, options);
   const motionDb = await motionCol.findOne({ hash, isFinal: false });
   if (!motionDb) {
     logger.error(`error fetching motion with hash: ${hash} in saveNewMotion`);

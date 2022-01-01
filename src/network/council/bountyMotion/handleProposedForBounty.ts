@@ -58,27 +58,28 @@ export const handleProposedForBounty = async (event, normalizedExtrinsic, extrin
     ];
 
     const { bounty_id: treasuryBountyId } = args;
+
     const motionCol = await getMotionCollection();
-    const motion = await motionCol.findOne({ hash, isFinal: false });
-    if (motion) {
-        logger.info(`motion with hash: ${hash} exists already`);
-        return false;
-    }
-    await motionCol.insertOne({
-        hash,
-        index,
-        proposer,
-        method,
-        treasuryBountyId,
-        voting,
-        isFinal: false,
-        state: {
-            state: CouncilEvents.Proposed,
-            eventData,
-            extrinsic: normalizedExtrinsic,
-        },
-        timeline,
-    });
+    const query = { hash, isFinal: false };
+    const update = {
+        $set: {
+            hash,
+            index,
+            proposer,
+            method,
+            treasuryBountyId,
+            voting,
+            isFinal: false,
+            state: {
+                state: CouncilEvents.Proposed,
+                eventData,
+                extrinsic: normalizedExtrinsic,
+            },
+            timeline,
+        }
+    };
+    const options = { upsert: true };
+    await motionCol.updateOne(query, update, options);
     const motionDb = await motionCol.findOne({ hash, isFinal: false });
     if (!motionDb) {
         logger.error(`error fetching motion with hash: ${hash} in saveNewMotion`);
