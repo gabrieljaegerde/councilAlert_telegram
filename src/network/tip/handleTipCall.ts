@@ -1,36 +1,37 @@
-import { getTipCollection } from "../../mongo/db.js";
+import { getTipCollection } from "../../mongo/index.js";
 import { logger } from "../../../tools/logger.js";
-import { Modules, TipMethods } from "../../../tools/constants.js";
-import { computeTipValue, getTipMeta, getTippersCountFromApi } from "./tipHelpers.js";
-import { updateTipByTip } from "./updateTipByTip.js";
-
-const isTipModule = (section) => {
-    return section === Modules.Tips;
-}
-
-const getCommonTipUpdates = async (tipHash, indexer) => {
-    const tippersCount = await getTippersCountFromApi(indexer.blockHash);
-    const meta = await getTipMeta(tipHash, indexer);
-    return { tippersCount, meta, medianValue: computeTipValue(meta) };
-}
+import { Modules, TimelineItemTypes, TipMethods } from "../../../tools/constants.js";
+import { updateTipByHash } from "../../mongo/service/tip.js";
+import { getTipCommonUpdates } from "./tipHelpers.js";
 
 export const handleTipCall = async (call, author, extrinsicIndexer) => {
     if (
-        !isTipModule(call.section) ||
+        ![Modules.Treasury, Modules.Tips].includes(call.section) ||
         TipMethods.tip !== call.method
     ) {
         return;
     }
+
     const {
         args: { hash, tip_value: tipValue },
     } = call.toJSON();
-
-    const updates = await getCommonTipUpdates(hash, extrinsicIndexer);
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isClosedOrRetracted: false });
+    const tip = await tipCol.findOne({ hash, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipCall but doesnt exist in db.`);
-      return;
+        logger.info(`tip with hash: ${hash} tipped but doesnt exist in db.`);
+        return;
     }
-    await updateTipByTip(hash, updates, author, tipValue, extrinsicIndexer);
+    const updates = await getTipCommonUpdates(hash, extrinsicIndexer);
+    const timelineItem = {
+        type: TimelineItemTypes.extrinsic,
+        method: TipMethods.tip,
+        args: {
+            tipper: author,
+            value: tipValue,
+        },
+        indexer: extrinsicIndexer,
+    };
+
+    await updateTipByHash(hash, updates, timelineItem);
 };
+

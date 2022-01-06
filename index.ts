@@ -9,7 +9,7 @@ import { ApiPromise } from "@polkadot/api";
 import { Low } from "lowdb/lib";
 import mongoose from "mongoose";
 import { BlockListener } from "./src/network/blockListener.js";
-import { getUserCollection } from "./src/mongo/db.js";
+import { getUserCollection } from "./src/mongo/index.js";
 import { sendNotifications } from "./src/notification/sendNotifications.js";
 
 dotenv.config();

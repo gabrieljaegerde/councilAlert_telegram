@@ -2,7 +2,7 @@ import { checkAddress } from "@polkadot/util-crypto";
 import { Context } from "grammy";
 import { MenuTemplate, MenuMiddleware, createBackMainMenuButtons, deleteMenuFromContext } from "grammy-inline-menu";
 import _ from "lodash";
-import { getAlertCollection } from "../mongo/db.js";
+import { getAlertCollection } from "../mongo/index.js";
 import { StatelessQuestion } from '@grammyjs/stateless-question';
 import { botParams, getKeyboard } from "../../config.js";
 import { selectFrequency } from "./selectFrequency.js";

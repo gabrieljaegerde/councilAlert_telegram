@@ -1,6 +1,6 @@
 import { MenuTemplate, createBackMainMenuButtons } from "grammy-inline-menu";
 import { Context } from "grammy";
-import { getAlertCollection } from "../mongo/db.js";
+import { getAlertCollection } from "../mongo/index.js";
 import { ObjectId } from "mongodb";
 
 let alert;

@@ -3,7 +3,7 @@ import { Keyboard } from "grammy";
 import { ApiPromise } from "@polkadot/api";
 import { Bot } from "grammy";
 import { RunnerHandle } from '@grammyjs/runner';
-import { getUserCollection, initDb } from './src/mongo/db.js';
+import { getUserCollection, initDb } from './src/mongo/index.js';
 import { BlockCountAdapter } from './tools/blockCountAdapter.js';
 import { BlockListener } from './src/network/blockListener.js';
 

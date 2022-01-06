@@ -1,31 +1,28 @@
-import { getProposalCollection } from "../../mongo/db.js";
-import { ProposalEvents, timelineItemTypes } from "../../../tools/constants.js";
-import { updateProposalInDb } from "./porposalHelpers.js";
+import { TimelineItemTypes, TreasuryProposalEvents } from "../../../tools/constants.js";
+import { updateProposal } from "../../mongo/service/treasuryProposal.js";
+import { logger } from "../../../tools/logger.js";
 
 export const handleRejected = async (event, eventIndexer) => {
     const eventData = event.data.toJSON();
-    const [proposalIndex, value] = eventData;
-
+    const [proposalId, value] = eventData;
+  
     const state = {
-        name: ProposalEvents.Rejected,
-        data: eventData,
-        eventIndexer,
+      state: TreasuryProposalEvents.Rejected,
+      data: eventData,
+      indexer: eventIndexer,
     };
-
+  
     const timelineItem = {
-        type: timelineItemTypes.event,
-        name: ProposalEvents.Rejected,
-        args: {
-            proposalIndex: proposalIndex,
-            value,
-        },
-        eventData,
-        eventIndexer,
+      type: TimelineItemTypes.event,
+      name: TreasuryProposalEvents.Rejected,
+      args: {
+        proposalIndex: proposalId,
+        value,
+      },
+      eventData,
+      indexer: eventIndexer,
     };
-
-    const updatesObj = {
-        $set: { state },
-        $push: { timeline: timelineItem },
-    };
-    await updateProposalInDb(proposalIndex, updatesObj);
-};
+  
+    await updateProposal(proposalId, { state }, timelineItem);
+    logger.info(`Treasury proposal ${ proposalId } rejected at`, eventIndexer);
+  }

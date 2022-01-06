@@ -35,10 +35,16 @@ export const ProposalEvents = Object.freeze({
   Rejected: "Rejected",
 });
 
-export const ProposalMethods = Object.freeze({
+export const TreasuryProposalMethods = Object.freeze({
   proposeSpend: "proposeSpend",
   rejectProposal: "rejectProposal",
   approveProposal: "approveProposal",
+});
+
+export const TreasuryProposalEvents = Object.freeze({
+  Proposed: "Proposed",
+  Awarded: "Awarded",
+  Rejected: "Rejected",
 });
 
 export const BountyEvents = Object.freeze({
@@ -49,6 +55,23 @@ export const BountyEvents = Object.freeze({
   BountyClaimed: "BountyClaimed",
   BountyCanceled: "BountyCanceled",
   BountyExtended: "BountyExtended",
+});
+
+export const BountyStatus = Object.freeze({
+  Proposed: "Proposed",
+  Approved: "Approved",
+  /// The bounty is funded and waiting for curator assignment.
+  Funded: "Funded",
+  /// A curator has been proposed by the `ApproveOrigin`. Waiting for acceptance from the
+  /// curator.
+  CuratorProposed: "CuratorProposed",
+  /// The bounty is active and waiting to be awarded.
+  Active: "Active",
+  /// The bounty is awarded and waiting to released after a delay.
+  PendingPayout: "PendingPayout",
+  Rejected: "Rejected",
+  Canceled: "Canceled",
+  Claimed: "Claimed",
 });
 
 export const BountyMethods = Object.freeze({
@@ -78,7 +101,10 @@ export const CouncilMethods = Object.freeze({
   close: "close",
 });
 
-
+export const MotionState = Object.freeze({
+  ApproveVoting: "ApproveVoting",
+  RejectVoting: "RejectVoting",
+});
    
 export const MotionActions = {
   Propose: "Propose",
@@ -131,6 +157,11 @@ export const ProxyMethods = Object.freeze({
   proxy: "proxy",
 });
 
+export const TimelineItemTypes = Object.freeze({
+  extrinsic: "extrinsic",
+  event: "event",
+});
+
 export const IdentityEvents = Object.freeze({
   IdentityKilled: "IdentityKilled",
 });
@@ -162,7 +193,6 @@ export const StakingEvents = Object.freeze({
   Reward: "Reward",
 });
 
-export const timelineItemTypes = Object.freeze({
-  extrinsic: "extrinsic",
-  event: "event",
+export const SudoMethods = Object.freeze({
+  sudo: "sudo",
 });

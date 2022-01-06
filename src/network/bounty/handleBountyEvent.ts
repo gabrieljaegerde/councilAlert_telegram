@@ -1,10 +1,11 @@
 import { BountyEvents, Modules } from "../../../tools/constants.js";
-import { handleBountyRejected } from "./handleBountryRejected.js";
-import { handleBountyAwarded } from "./handleBountyAwarded.js";
-import { handleBountyCanceled } from "./handleBountyCanceled.js";
-import { handleBountyClaimed } from "./handleBountyClaimed.js";
-import { handleBountyExtended } from "./handleBountyExtended.js";
+import { handleBountyRejected } from "./handleRejected.js";
+import { handleAwarded } from "./handleAwarded.js";
+import { handleBountyCanceled } from "./handleCanceled.js";
+import { handleBountyClaimed } from "./handleClaimed.js";
+import { handleBountyExtended } from "./handleExtended.js";
 import { handleProposed } from "./handleProposed.js";
+import { handleBountyBecameActiveEvent } from "./handleBecameActive.js";
 
 const isBountyEvent = (section, method) => {
     return (
@@ -14,9 +15,7 @@ const isBountyEvent = (section, method) => {
 };
 
 export const handleBountyEventWithExtrinsic = async (
-    event,
-    normalizedExtrinsic,
-    extrinsic
+    event, extrinsic, indexer
 ) => {
     const { section, method } = event;
     if (!isBountyEvent(section, method)) {
@@ -24,16 +23,26 @@ export const handleBountyEventWithExtrinsic = async (
     }
 
     if (method === BountyEvents.BountyProposed) {
-        await handleProposed(event, normalizedExtrinsic, extrinsic);
+        await handleProposed(event, extrinsic, indexer);
     } else if (method === BountyEvents.BountyExtended) {
-        await handleBountyExtended(event, normalizedExtrinsic, extrinsic);
+        await handleBountyExtended(event, extrinsic, indexer);
     } else if (method === BountyEvents.BountyAwarded) {
-        await handleBountyAwarded(event, normalizedExtrinsic);
+        await handleAwarded(event, extrinsic, indexer);
     } else if (method === BountyEvents.BountyRejected) {
-        await handleBountyRejected(event, normalizedExtrinsic, extrinsic);
+        await handleBountyRejected(event, extrinsic, indexer);
     } else if (method === BountyEvents.BountyClaimed) {
-        await handleBountyClaimed(event, normalizedExtrinsic);
+        await handleBountyClaimed(event, extrinsic, indexer);
     } else if (method === BountyEvents.BountyCanceled) {
-        await handleBountyCanceled(event, normalizedExtrinsic, extrinsic);
+        await handleBountyCanceled(event, extrinsic, indexer);
     }
 };
+
+export const handleBountyEventWithoutExtrinsic = async (event, indexer) => {
+    const { section, method } = event;
+    if (
+      [Modules.Treasury, Modules.Bounties].includes(section) &&
+      method === BountyEvents.BountyBecameActive
+    ) {
+      await handleBountyBecameActiveEvent(event, indexer);
+    }
+  }

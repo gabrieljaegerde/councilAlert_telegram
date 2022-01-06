@@ -1,19 +1,17 @@
-import { GenericCall } from "@polkadot/types";
 import { tryInitCall } from "../../../tools/utils.js";
 import { botParams } from "../../../config.js";
-import { Modules, MultisigMethods, ProposalMethods, ProxyMethods } from "../../../tools/constants.js";
-import { getProposalCollection } from "../../mongo/db.js";
+import { Modules, MultisigMethods, TreasuryProposalMethods, ProxyMethods } from "../../../tools/constants.js";
 
 export const isProposalMotion = (method) => {
     return [
-        ProposalMethods.approveProposal,
-        ProposalMethods.rejectProposal,
+        TreasuryProposalMethods.approveProposal,
+        TreasuryProposalMethods.rejectProposal,
     ].includes(method);
 };
 
 export const extractCallIndexAndArgs = (normalizedExtrinsic, extrinsic) => {
     const { section, name } = normalizedExtrinsic;
-
+    
     if (Modules.Proxy === section && ProxyMethods.proxy === name) {
         const proposeCall = tryInitCall(
             extrinsic.registry,
@@ -27,6 +25,7 @@ export const extractCallIndexAndArgs = (normalizedExtrinsic, extrinsic) => {
     }
 
     if ([Modules.Multisig, Modules.Utility].includes(section) && MultisigMethods.asMulti === name) {
+        console.log("in heare", normalizedExtrinsic);
         const proposeCall = tryInitCall(
             extrinsic.registry,
             extrinsic.method.args[3].toHex()
@@ -59,7 +58,9 @@ export const getMotionVotingByHeight = async (height, motionHash) => {
     return await getMotionVoting(blockHash, motionHash);
 };
 
-export const updateProposalInDb = async (proposalIndex, updatesObj) => {
-    const proposalCol = await getProposalCollection();
-    await proposalCol.findOneAndUpdate({ proposalIndex }, updatesObj);
-};
+export const getTreasuryProposalMeta = async (blockHash, proposalIndex) => {
+    const blockApi = await botParams.api.at(blockHash);
+
+    const raw = await blockApi.query.treasury.proposals(proposalIndex);
+    return raw.toJSON();
+  }

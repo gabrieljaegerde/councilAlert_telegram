@@ -1,7 +1,7 @@
-import { escapeMarkdown, getAccountName, getCouncilMembers, send } from "../../tools/utils.js";
+import { escapeMarkdown, getAccountName, getCouncilMembers, send, sleep } from "../../tools/utils.js";
 import { botParams } from "../../config.js";
-import { getAlertCollection, getUserCollection } from "../mongo/db.js";
-import { getOutstandingMotions } from "../network/council/motionHelpers.js";
+import { getAlertCollection, getUserCollection } from "../mongo/index.js";
+import { getOutstandingMotions } from "../network/motion/motionHelpers.js";
 import { getOutstandingTips } from "../network/tip/tipHelpers.js";
 
 
@@ -18,11 +18,8 @@ export const sendNotifications = async (motionOrTip: string, frequency: string, 
             const nonVotedMotions = await getOutstandingMotions(memberAddress);
             let motionCount = 1;
             for (const motion of nonVotedMotions) {
-                outstandingMotionsString += (`*${motionCount++}\\.* ${motion["method"]}` +
-                    (motion["method"] === "approveProposal" ? `: ${motion["treasuryProposalId"]}` : "") +
-                    (motion["method"] === "approveBounty" ? `: ${motion["treasuryBountyId"]}` : "") +
-                    (motion["method"] === "proposeCurator" ? `: ${motion["treasuryBountyId"]}` : "") +
-                    "\n");
+                outstandingMotionsString += (`*${motionCount++}\\.* ${motion.proposal.section} \\- ` +
+                    `${motion.proposal.method} \\(Index: ${motion.index}\\)\n`);
             }
         }
         else if (motionOrTip === "tip") {
@@ -48,6 +45,7 @@ export const sendNotifications = async (motionOrTip: string, frequency: string, 
                             `You have not voted on the following ${motionOrTip}\\(s\\) yet:\n\n` +
                             (motionOrTip === "motion" ? outstandingMotionsString : outstandingTipsString);
                         await send(user.chatId, message, "MarkdownV2");
+                        sleep(1000);
                     }
                 }
             }

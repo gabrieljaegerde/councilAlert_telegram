@@ -2,7 +2,7 @@ import { Context } from "grammy";
 import { MenuTemplate, MenuMiddleware, createBackMainMenuButtons } from "grammy-inline-menu";
 import _ from "lodash";
 import { getAccountName } from "../../tools/utils.js";
-import { getAlertCollection } from "../mongo/db.js";
+import { getAlertCollection } from "../mongo/index.js";
 import { showAlert } from "./showAlert.js";
 
 let userAlerts;

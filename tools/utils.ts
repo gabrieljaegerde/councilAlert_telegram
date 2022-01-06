@@ -1,11 +1,11 @@
 import BigNumber from "bignumber.js";
 import { botParams } from "../config.js";
 import { InlineKeyboard } from "grammy";
-import { getUserCollection } from "../src/mongo/db.js";
+import { getUserCollection } from "../src/mongo/index.js";
 import { GenericCall } from "@polkadot/types";
 import { logger } from "../tools/logger.js";
 import { createKeyMulti, encodeAddress } from "@polkadot/util-crypto";
-import { hexToU8a } from "@polkadot/util";
+import { hexToU8a, u8aToHex } from "@polkadot/util";
 import { Modules, MultisigMethods, ProxyMethods, UtilityMethods } from "./constants.js";
 
 export const amountToHuman = (amount: string, afterCommas?: number): { value: string, tokenString: string; } => {
@@ -221,3 +221,55 @@ export const escapeMarkdown = (text) => {
   var escaped = unescaped.replace(/(\*|_|`|~|\.|!|\[|\]|\(|\)|~|>|#|\+|-|=|\||\{|\}|\\)/g, '\\$1'); // escape *, _, `, ~, \
   return escaped;
 };
+
+export const normalizeCall = (call) => {
+  const { section, method } = call;
+  const callIndex = u8aToHex(call.callIndex);
+
+  const args = [];
+  for (let index = 0; index < call.args.length; index++) {
+    const arg = call.args[index];
+
+    const argMeta = call.meta.args[index];
+    const name = argMeta.name.toString();
+    const type = argMeta.type.toString();
+    if (type === "Call" || type === "CallOf") {
+      args.push({
+        name,
+        type,
+        value: normalizeCall(arg),
+      });
+      continue;
+    }
+
+    if (type === "Vec<Call>" || type === "Vec<CallOf>") {
+      args.push({
+        name,
+        type,
+        value: arg.map(normalizeCall),
+      });
+      continue;
+    }
+
+    args.push({
+      name,
+      type,
+      value: arg.toJSON(),
+    });
+  }
+
+  return {
+    callIndex,
+    section,
+    method,
+    args,
+  };
+}
+
+export const getBlockHash = async (height) => {
+  return await botParams.api.rpc.chain.getBlockHash(height);
+};
+
+export const isExtrinsicSuccess = (events) => {
+  return events.some((e) => e.event.method === "ExtrinsicSuccess");
+}

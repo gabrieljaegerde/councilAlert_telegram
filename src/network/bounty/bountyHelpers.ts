@@ -2,7 +2,7 @@ import { GenericCall } from "@polkadot/types";
 import { calcMultisigAddress, tryInitCall } from "../../../tools/utils.js";
 import { botParams } from "../../../config.js";
 import { BountyMethods, Modules, MultisigMethods, ProxyMethods } from "../../../tools/constants.js";
-import { getBountyCollection } from "../../mongo/db.js";
+import { getBountyCollection } from "../../mongo/index.js";
 
 export const getBountyMeta = async (blockHash, bountyIndex) => {
     const blockApi = await botParams.api.at(blockHash);
@@ -84,12 +84,7 @@ export const getRealCaller = (call, caller) => {
     return caller;
 };
 
-export const updateBountyInDb = async (bountyIndex, updatesObj) => {
-    const bountyCol = await getBountyCollection();
-    await bountyCol.findOneAndUpdate({ bountyIndex }, updatesObj);
-};
-
 export const getBountyMetaByBlockHeight = async (height, bountyIndex) => {
     const blockHash = await botParams.api.rpc.chain.getBlockHash(height);
     return await getBountyMeta(blockHash, bountyIndex);
-  }
+};

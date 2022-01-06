@@ -1,9 +1,11 @@
 import { GenericCall } from "@polkadot/types";
 import { logger } from "../../tools/logger.js";
-import { Modules, MultisigMethods, ProxyMethods, TipMethods, UtilityMethods } from "../../tools/constants.js";
-import { normalizeExtrinsic } from "./eventsHandler.js";
+import { Modules, MultisigMethods, ProxyMethods, SudoMethods, TipMethods, UtilityMethods } from "../../tools/constants.js";
 import { handleTipCall } from "./tip/handleTipCall.js";
-import { calcMultisigAddress, tryInitCall } from "../../tools/utils.js";
+import { calcMultisigAddress, isExtrinsicSuccess, tryInitCall } from "../../tools/utils.js";
+import { hexToU8a } from "@polkadot/util";
+import { botParams } from "../../config.js";
+import { handleAcceptCurator } from "./bounty/handleAcceptCurator.js";
 
 const extractExtrinsicEvents = (events, extrinsicIndex) => {
     return events.filter((event) => {
@@ -12,88 +14,88 @@ const extractExtrinsicEvents = (events, extrinsicIndex) => {
     });
 };
 
-const handleCall = async (call, author, extrinsicIndexer) => {
+const handleCall = async (call, author, extrinsicIndexer, events) => {
     await handleTipCall(call, author, extrinsicIndexer);
-};
+    await handleAcceptCurator(call, author, extrinsicIndexer);
+}
 
-const unwrapProxy = async (call, signer, extrinsicIndexer) => {
+const unwrapProxy = async (call, signer, extrinsicIndexer, events) => {
     const real = call.args[0].toJSON();
     const innerCall = call.args[2];
-    await handleWrappedCall(innerCall, real, extrinsicIndexer);
-};
+    await handleWrappedCall(innerCall, real, extrinsicIndexer, events);
+}
 
-const handleMultisig = async (call, signer, extrinsicIndexer) => {
+const handleMultisig = async (call, signer, extrinsicIndexer, events) => {
+    const registry = await botParams.api.getBlockRegistry(hexToU8a(extrinsicIndexer.blockHash));
+    //const registry = await findRegistry(extrinsicIndexer);
     const callHex = call.args[3];
     const threshold = call.args[0].toNumber();
     const otherSignatories = call.args[1].toJSON();
     const multisigAddr = calcMultisigAddress(
         [signer, ...otherSignatories],
         threshold,
-        call.registry.chainSS58
+        registry.registry.chainSS58
     );
 
     let innerCall;
-
     try {
-        innerCall = tryInitCall(call.registry, callHex);
+        innerCall = new GenericCall(registry.registry, callHex);
     } catch (e) {
         logger.error(`error when parse multiSig`, extrinsicIndexer);
         return;
     }
 
     await handleWrappedCall(innerCall, multisigAddr, extrinsicIndexer);
-};
+}
 
-const unwrapBatch = async (call, signer, extrinsicIndexer) => {
+const unwrapBatch = async (call, signer, extrinsicIndexer, events) => {
+    // TODO: not handle call after the BatchInterrupted event
     for (const innerCall of call.args[0]) {
-        await handleWrappedCall(innerCall, signer, extrinsicIndexer);
+        await handleWrappedCall(innerCall, signer, extrinsicIndexer, events);
     }
-};
+}
 
-const handleWrappedCall = async (call, signer, extrinsicIndexer) => {
+const unwrapSudo = async (call, signer, extrinsicIndexer, events) => {
+    const innerCall = call.args[0];
+    await handleWrappedCall(innerCall, signer, extrinsicIndexer, events);
+}
+
+const handleWrappedCall = async (call, signer, extrinsicIndexer, events?) => {
     const { section, method } = call;
 
     if (Modules.Proxy === section && ProxyMethods.proxy === method) {
-        await unwrapProxy(call, signer, extrinsicIndexer);
+        await unwrapProxy(call, signer, extrinsicIndexer, events);
     } else if (
-        [Modules.Multisig, Modules.Utility].includes(section) &&
+        Modules.Multisig === section &&
         MultisigMethods.asMulti === method
     ) {
-        await handleMultisig(call, signer, extrinsicIndexer);
+        await handleMultisig(call, signer, extrinsicIndexer, events);
     } else if (Modules.Utility === section && UtilityMethods.batch === method) {
-        await unwrapBatch(call, signer, extrinsicIndexer);
+        await unwrapBatch(call, signer, extrinsicIndexer, events);
+    } else if (Modules.Sudo === section && SudoMethods.sudo) {
+        await unwrapSudo(call, signer, extrinsicIndexer, events);
     }
 
-    await handleCall(call, signer, extrinsicIndexer);
-};
+    await handleCall(call, signer, extrinsicIndexer, events);
+}
 
 const extractAndHandleCall = async (extrinsic, events = [], extrinsicIndexer) => {
-    const signer = extrinsic._raw.signature.signer.toString();
+    const signer = extrinsic.signer.toString();
     const call = extrinsic.method;
 
-    await handleWrappedCall(call, signer, extrinsicIndexer);
-};
+    await handleWrappedCall(call, signer, extrinsicIndexer, events);
+}
 
-export const handleExtrinsics = async (extrinsics = [], allEvents = [], indexer) => {
+export const handleExtrinsics = async (extrinsics = [], allEvents = [], blockIndexer) => {
     let index = 0;
     for (const extrinsic of extrinsics) {
         const events = extractExtrinsicEvents(allEvents, index);
-        const normalized = normalizeExtrinsic(extrinsic, events);
-        if (indexer.blockHeight == 10514814) {
-            console.log("norm", normalized);
-        }
-        const extrinsicIndexer = {
-            ...indexer,
-            index: index++,
-        };
-        if (!normalized.isSuccess) {
+        const extrinsicIndexer = { ...blockIndexer, extrinsicIndex: index++ };
+
+        if (!isExtrinsicSuccess(events)) {
             continue;
         }
-        try {
-            await extractAndHandleCall(extrinsic, events, extrinsicIndexer);
-        } catch (e) {
-            logger.error(`error handling extrinsic ${normalized}: ${e}`);
-            return;
-        }
+
+        await extractAndHandleCall(extrinsic, events, extrinsicIndexer);
     }
-};
+}

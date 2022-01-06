@@ -2,7 +2,7 @@ import { Bot, GrammyError, HttpError } from "grammy";
 import { botParams, getKeyboard } from "./config.js";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { run, RunnerHandle } from "@grammyjs/runner";
-import { getUserCollection } from "./src/mongo/db.js";
+import { getUserCollection } from "./src/mongo/index.js";
 import { listAlertsMiddleware } from "./src/alert/listAlerts.js";
 import { addAlertMiddleware, enterAddress } from "./src/alert/addAlert.js";
 
@@ -14,7 +14,7 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
 
   const bot = new Bot(botParams.settings.botToken);
 
-  bot.api.config.use(apiThrottler());
+  //bot.api.config.use(apiThrottler());
 
   /*
    *   /start command handler

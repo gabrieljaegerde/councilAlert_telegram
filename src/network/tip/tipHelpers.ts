@@ -1,5 +1,5 @@
 import { botParams } from "../../../config.js";
-import { hexToString } from "@polkadot/util";
+import { hexToString, isHex } from "@polkadot/util";
 import {
     ProxyMethods,
     TipMethods,
@@ -8,7 +8,10 @@ import {
     UtilityMethods,
 } from "../../../tools/constants.js";
 import { getCall } from "../../../tools/utils.js";
-import { getTipCollection } from "../../mongo/db.js";
+import { getTipCollection } from "../../mongo/index.js";
+import { GenericCall } from "@polkadot/types";
+import { blake2AsHex } from "@polkadot/util-crypto";
+import { getActiveTipByHash } from "../../mongo/service/tip.js";
 
 export const getTipMeta = async (tipHash, { blockHeight, blockHash }) => {
     const blockApi = await botParams.api.at(blockHash);
@@ -83,36 +86,22 @@ export const computeTipValue = (tipMeta) => {
     return median(tipValues);
 };
 
-export const getTipReason = async (normalizedExtrinsic, extrinsic) => {
-    const { section, name, args } = normalizedExtrinsic;
+export const getTipReason = async (blockHash, reasonHash) => {
+    const blockApi = await botParams.api.at(blockHash);
 
-    if (name === ProxyMethods.proxy) {
-        return hexToString(args.call.args.reason);
+    let rawMeta;
+    if (blockApi.query.treasury?.reasons) {
+        rawMeta = await blockApi.query.treasury?.reasons(reasonHash);
+    } else {
+        rawMeta = await blockApi.query.tips.reasons(reasonHash);
     }
 
-    if ([TipMethods.tipNew, TipMethods.reportAwesome].includes(name)) {
-        return hexToString(args.reason);
+    const maybeTxt = rawMeta.toHuman();
+    if (isHex(maybeTxt)) {
+        return hexToString(maybeTxt);
+    } else {
+        return maybeTxt;
     }
-
-    if (Modules.Multisig === section || MultisigMethods.asMulti === name) {
-        // handle multisig transaction
-        const rawCall = extrinsic.method.args[3].toHex();
-        const call = await getCall(
-            normalizedExtrinsic.extrinsicIndexer.blockHash,
-            rawCall
-        );
-        if (
-            Modules.Treasury !== call.section ||
-            [TipMethods.tipNew, TipMethods.reportAwesome].includes(call.method)
-        ) {
-            return;
-        }
-        const { args } = call.toJSON();
-        const reason = args["reason"];
-        return hexToString(reason);
-    }
-
-    return null;
 };
 
 export const getTipMethodNameAndArgs = async (
@@ -166,7 +155,7 @@ export const getTipMethodNameAndArgs = async (
 export const getOutstandingTips = async (address) => {
     const tipCol = await getTipCollection();
     let outstandingTips = [];
-    const openTips = await tipCol.find({ isClosedOrRetracted: false }).toArray();
+    const openTips = await tipCol.find({ isFinal: false }).toArray();
     for (const tip of openTips) {
         const voted = tip.meta.tips.filter((item) => {
             return (item[0] === address);
@@ -176,4 +165,96 @@ export const getOutstandingTips = async (address) => {
         }
     }
     return outstandingTips;
+};
+
+export const getTipMetaFromStorage = async (blockHash, tipHash) => {
+    const blockApi = await botParams.api.at(blockHash);
+    let rawMeta;
+    if (blockApi.query.treasury?.tips) {
+        rawMeta = await blockApi.query.treasury?.tips(tipHash);
+    } else {
+        rawMeta = await blockApi.query.tips.tips(tipHash);
+    }
+
+    return rawMeta.toJSON();
+};
+
+export const getFinderFromMeta = (meta) => {
+    if (meta.finder && typeof meta.finder === 'string') {
+        return meta.finder;
+    }
+
+    if (meta.finder && Array.isArray(meta.finder)) {
+        return meta.finder[0];
+    }
+
+    return meta.tips[0][0];
+};
+
+const findNewTipCallFromProxy = (registry, proxyCall, reasonHash) => {
+    const [, , innerCall] = proxyCall.args;
+    return getNewTipCall(registry, innerCall, reasonHash);
+};
+
+const findNewTipCallFromMulti = (registry, call, reasonHash) => {
+    const callHex = call.args[3];
+    const innerCall = new GenericCall(registry, callHex);
+    return getNewTipCall(registry, innerCall, reasonHash);
+};
+
+const findNewTipCallFromBatch = (registry, call, reasonHash) => {
+    for (const innerCall of call.args[0]) {
+        const call = getNewTipCall(registry, innerCall, reasonHash);
+        if (call) {
+            return call;
+        }
+    }
+
+    return null;
+};
+
+export const getNewTipCall = (registry, call, reasonHash) => {
+    const { section, method, args } = call;
+    if (Modules.Proxy === section && ProxyMethods.proxy === method) {
+        return findNewTipCallFromProxy(registry, call, reasonHash);
+    }
+
+    if (Modules.Multisig === section || MultisigMethods.asMulti === method) {
+        return findNewTipCallFromMulti(registry, call, reasonHash);
+    }
+
+    if (Modules.Utility === section && UtilityMethods.batch === method) {
+        return findNewTipCallFromBatch(registry, call, reasonHash);
+    }
+
+    if (
+        [Modules.Treasury, Modules.Tips].includes(section) &&
+        [TipMethods.tipNew, TipMethods.reportAwesome].includes(method)
+    ) {
+        const hash = blake2AsHex(args[0]);
+        if (hash === reasonHash) {
+            return call;
+        }
+    }
+
+    return null;
+};
+
+export const getTipCommonUpdates = async (hash, { blockHeight, blockHash }) => {
+    const tipInDb = await getActiveTipByHash(hash);
+    if (!tipInDb) {
+        throw new Error(`can not find tip in db. hash: ${hash}`);
+    }
+
+    const newMeta = await getTipMetaFromStorage(blockHash, hash);
+    const meta = {
+        ...tipInDb.meta,
+        tips: newMeta.tips,
+        closes: newMeta.closes,
+    };
+    const medianValue = computeTipValue(newMeta);
+    const tippersCount = await getTippersCountFromApi(blockHash);
+    const tipFindersFee = await getTipFindersFeeFromApi(blockHash);
+
+    return { medianValue, meta, tippersCount, tipFindersFee };
 };

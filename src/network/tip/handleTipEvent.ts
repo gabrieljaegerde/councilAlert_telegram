@@ -1,75 +1,64 @@
-import { getTipCollection } from "../../mongo/db.js";
+import { getTipCollection } from "../../mongo/index.js";
 import {
   TipEvents,
   Modules,
 } from "../../../tools/constants.js";
 import { saveNewTip } from "./saveNewTip.js";
-import { updateTipByClosingEvent } from "./updateTipByClosingEvent.js";
-import { updateTipFinalState } from "./updateTipFinalState.js";
-import { GenericExtrinsic } from "@polkadot/types";
-import { Event } from "@polkadot/types/interfaces";
+import { updateTipWithClosing } from "./updateTipWithClosing.js";
 import { logger } from "../../../tools/logger.js";
+import { updateTipWithTipClosed } from "./updateTipWithTipClosed.js";
+import { updateTipWithTipRetracted } from "./updateTipWithTipRetracted.js";
+import { updateTipWithTipSlashed } from "./updateTipWithTipSlashed.js";
 
-const isTipEvent = (section: string, method: string) => {
-  const isSection =
-    section === Modules.Tips;
-  return isSection && TipEvents.hasOwnProperty(method);
-};
+const isTipEvent = (section, method) => {
+  if (![Modules.Treasury, Modules.Tips].includes(section)) {
+    return false;
+  }
 
-export const handleTipEvent = async (
-  event: Event,
-  normalizedExtrinsic,
-  blockIndexer,
-  extrinsic: GenericExtrinsic
-) => {
+  return TipEvents.hasOwnProperty(method);
+}
+
+export const handleTipEvent = async (event, extrinsic, indexer) => {
   const { section, method, data } = event;
   if (!isTipEvent(section, method)) {
     return;
   }
-
-  const eventData = data.toJSON();
-  // console.log("eventData", eventData)
-  // const [hash] = eventData;
-  // console.log("hash", hash)
-  // const hash = [];
-  // hash.push(eventData);
-  const hash = eventData[0];
-  if (method === TipEvents.NewTip) {
-    await saveNewTip(hash, normalizedExtrinsic, extrinsic);
-  } else if (method === TipEvents.TipClosing) {
+  const [hash] = data;
+  // const eventData = data.toJSON();
+  // const hash = eventData[0];
+  if (TipEvents.NewTip === method) {
+    await saveNewTip(event, extrinsic, indexer);
+  } else if (TipEvents.TipClosing === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isClosedOrRetracted: false });
+    const tip = await tipCol.findOne({ hash, isFinal: false });
     if (!tip) {
       logger.info(`tip with hash: ${hash} TipClosing but doesnt exist in db.`);
       return;
     }
-    await updateTipByClosingEvent(
-      hash,
-      TipEvents.TipClosing,
-      eventData,
-      normalizedExtrinsic
-    );
-
-  } else if (
-    [
-      TipEvents.TipClosed,
-      TipEvents.TipRetracted,
-      TipEvents.TipSlashed,
-    ].includes(method)
-  ) {
+    await updateTipWithClosing(hash.toString(), indexer);
+  } else if (TipEvents.TipClosed === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isClosedOrRetracted: false });
+    const tip = await tipCol.findOne({ hash, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipClosed/Retracted/Slashed but doesnt exist in db.`);
+      logger.info(`tip with hash: ${hash} TipClosed but doesnt exist in db.`);
       return;
     }
-
-    await updateTipFinalState(
-      hash,
-      method,
-      eventData,
-      normalizedExtrinsic,
-      extrinsic
-    );
+    await updateTipWithTipClosed(event, extrinsic, indexer);
+  } else if (TipEvents.TipRetracted === method) {
+    const tipCol = await getTipCollection();
+    const tip = await tipCol.findOne({ hash, isFinal: false });
+    if (!tip) {
+      logger.info(`tip with hash: ${hash} TipRetracted but doesnt exist in db.`);
+      return;
+    }
+    await updateTipWithTipRetracted(event, extrinsic, indexer);
+  } else if (TipEvents.TipSlashed === method) {
+    const tipCol = await getTipCollection();
+    const tip = await tipCol.findOne({ hash, isFinal: false });
+    if (!tip) {
+      logger.info(`tip with hash: ${hash} TipSlashed but doesnt exist in db.`);
+      return;
+    }
+    await updateTipWithTipSlashed(event, extrinsic, indexer);
   }
-};
+}

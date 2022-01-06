@@ -1,6 +1,6 @@
 import { MenuTemplate, createBackMainMenuButtons, deleteMenuFromContext } from "grammy-inline-menu";
 import { Context } from "grammy";
-import { getAlertCollection } from "../mongo/db.js";
+import { getAlertCollection } from "../mongo/index.js";
 import { listAlertsMiddleware } from "./listAlerts.js";
 import { escapeMarkdown, getAccountName, send } from "../../tools/utils.js";
 import { updateFrequency } from "./updateFrequency.js";

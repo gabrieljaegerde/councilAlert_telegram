@@ -55,9 +55,9 @@ export class BlockListener {
             const blockIndexer = getBlockIndexer(block);
             const events = await blockApi.query.system.events();
             await handleExtrinsics(block.extrinsics, events, blockIndexer);
-            await handleEvents(events, blockIndexer, block.extrinsics);
+            await handleEvents(events, block.extrinsics, blockIndexer);
         } catch (e) {
-            logger.error(`error fetching events at block ${blockNumber}: ${e}`);
+            logger.error(`error fetching extrinsics or events at block ${blockNumber}: ${e}`);
             return;
         }
     };
