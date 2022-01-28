@@ -58,7 +58,7 @@ export class BlockListener {
             await handleEvents(events, block.extrinsics, blockIndexer);
         } catch (e) {
             logger.error(`error fetching extrinsics or events at block ${blockNumber}: ${e}`);
-            return;
+            return e;
         }
     };
 
@@ -69,7 +69,7 @@ export class BlockListener {
             }
         } catch (e) {
             logger.error(`error fetching missing block ev. & extr. from ${latestBlockDb} to ${to}: ${e}`);
-            return;
+            return e;
         }
     };
 
@@ -84,18 +84,24 @@ export class BlockListener {
                 );
             }
 
-            if (!this.missingBlockEventsFetched && !this.missingBlockFetchInitiated) {
-                this.missingBlockFetchInitiated = true;
-                const latestBlock = await this.storageProvider.get();
-                await this.fetchMissingBlockEventsAndExtrinsics(latestBlock, blockNumber - 1);
-                this.missingBlockEventsFetched = true;
-                sendNotifications("motion", "hourly", true);
-                sendNotifications("motion", "daily", true);
-                sendNotifications("tip", "hourly", true);
-                sendNotifications("tip", "daily", true);
+            try {
+                if (!this.missingBlockEventsFetched && !this.missingBlockFetchInitiated) {
+                    this.missingBlockFetchInitiated = true;
+                    const latestBlock = await this.storageProvider.get();
+                    await this.fetchMissingBlockEventsAndExtrinsics(latestBlock, blockNumber - 1);
+                    this.missingBlockEventsFetched = true;
+                    sendNotifications("motion", "hourly", true);
+                    sendNotifications("motion", "daily", true);
+                    sendNotifications("tip", "hourly", true);
+                    sendNotifications("tip", "daily", true);
+                }
+
+                this.fetchEventsAndExtrinsicsAtBlock(blockNumber);
+            } catch (e: any) {
+                console.error(e);
+                return;
             }
 
-            this.fetchEventsAndExtrinsicsAtBlock(blockNumber);
 
             // Update local db latestBlock
             if (
