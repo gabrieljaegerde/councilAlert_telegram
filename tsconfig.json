@@ -2,7 +2,8 @@
     "compilerOptions": {
         "outDir": "./dist",
         "lib": [
-            "DOM"
+            "DOM",
+            "ES2020"
         ],
         "target": "ES2017",
         "module": "ES2020",

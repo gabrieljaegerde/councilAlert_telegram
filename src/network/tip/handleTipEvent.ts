@@ -24,39 +24,40 @@ export const handleTipEvent = async (event, extrinsic, indexer) => {
     return;
   }
   const [hash] = data;
+  const hashString = hash.toString();
   // const eventData = data.toJSON();
   // const hash = eventData[0];
   if (TipEvents.NewTip === method) {
     await saveNewTip(event, extrinsic, indexer);
   } else if (TipEvents.TipClosing === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isFinal: false });
+    const tip = await tipCol.findOne({ hash: hashString, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipClosing but doesnt exist in db.`);
+      logger.info(`tip with hash: ${hashString} TipClosing but doesnt exist in db.`);
       return;
     }
     await updateTipWithClosing(hash.toString(), indexer);
   } else if (TipEvents.TipClosed === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isFinal: false });
+    const tip = await tipCol.findOne({ hash: hashString, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipClosed but doesnt exist in db.`);
+      logger.info(`tip with hash: ${hashString} TipClosed but doesnt exist in db.`);
       return;
     }
     await updateTipWithTipClosed(event, extrinsic, indexer);
   } else if (TipEvents.TipRetracted === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isFinal: false });
+    const tip = await tipCol.findOne({ hash: hashString, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipRetracted but doesnt exist in db.`);
+      logger.info(`tip with hash: ${hashString} TipRetracted but doesnt exist in db.`);
       return;
     }
     await updateTipWithTipRetracted(event, extrinsic, indexer);
   } else if (TipEvents.TipSlashed === method) {
     const tipCol = await getTipCollection();
-    const tip = await tipCol.findOne({ hash, isFinal: false });
+    const tip = await tipCol.findOne({ hash: hashString, isFinal: false });
     if (!tip) {
-      logger.info(`tip with hash: ${hash} TipSlashed but doesnt exist in db.`);
+      logger.info(`tip with hash: ${hashString} TipSlashed but doesnt exist in db.`);
       return;
     }
     await updateTipWithTipSlashed(event, extrinsic, indexer);
