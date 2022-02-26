@@ -1,7 +1,3 @@
-import { GenericExtrinsic, Vec } from "@polkadot/types";
-import { FrameSystemEventRecord } from "@polkadot/types/lookup";
-import { u8aToHex } from "@polkadot/util";
-import { logger } from "../../tools/logger.js";
 import { handleBountyEventWithExtrinsic, handleBountyEventWithoutExtrinsic } from "./bounty/handleBountyEvent.js";
 import { handleMotionEvent } from "./motion/handleMotionEvent.js";
 import { handleTreasuryProposalEvent, handleTreasuryProposalEventWithoutExtrinsic } from "./proposal/handlePropsalEvent.js";

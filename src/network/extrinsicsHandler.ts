@@ -86,7 +86,7 @@ const extractAndHandleCall = async (extrinsic, events = [], extrinsicIndexer) =>
     await handleWrappedCall(call, signer, extrinsicIndexer, events);
 }
 
-export const handleExtrinsics = async (extrinsics = [], allEvents = [], blockIndexer) => {
+export const handleExtrinsics = async (extrinsics = [], allEvents, blockIndexer) => {
     let index = 0;
     for (const extrinsic of extrinsics) {
         const events = extractExtrinsicEvents(allEvents, index);
